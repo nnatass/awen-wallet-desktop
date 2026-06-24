@@ -1,0 +1,26 @@
+{
+  "name": "awen-wallet",
+  "version": "1.0.0",
+  "description": "AWEN Wallet desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.awen.wallet",
+    "productName": "AWEN Wallet",
+    "files": ["main.js", "index.html", "logo.png"],
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    }
+  },
+  "devDependencies": {
+    "electron": "^42.5.0",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "ethers": "^6.13.4"
+  }
+}

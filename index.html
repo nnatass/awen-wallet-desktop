@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AWEN Wallet</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Tahoma, "MS Sans Serif", Geneva, sans-serif;
+    background: #ece9d8;
+    color: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px;
+    font-size: 12px;
+  }
+  .splash {
+    width: 100%; max-width: 420px; background: #fff; border: 1px solid #919b9c;
+    padding: 14px; text-align: center; border-radius: 6px 6px 0 0;
+  }
+  .splash img { width: 90px; height: 90px; border-radius: 50%; box-shadow: 0 0 0 3px #c4c4c4, 0 0 0 4px #7f9db9; }
+  .splash .apptitle { font-size: 18px; font-weight: bold; margin-top: 6px; }
+  .splash .appsub { font-size: 11px; color: #555; }
+  .card {
+    background: #ece9d8; border: 1px solid #919b9c; border-top: none;
+    padding: 10px; width: 100%; max-width: 420px; margin-bottom: 10px;
+    box-shadow: inset 0 0 0 1px #fff;
+  }
+  .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .label { font-size: 12px; }
+  .value { font-weight: bold; font-size: 12px; font-family: "Courier New", monospace; }
+  .big-balance {
+    font-size: 20px; font-weight: bold; text-align: center; margin: 6px 0;
+    font-family: "Courier New", monospace; background: #fff; border: 1px solid #7f9db9; padding: 8px;
+  }
+  button.primary {
+    width: 100%; padding: 5px 10px; border: 1px solid #003c74;
+    background: linear-gradient(to bottom, #fefefe 0%, #ebebeb 45%, #dcdcdc 50%, #c4c4c4 95%, #b0b0b0 100%);
+    color: #000; font-size: 12px; cursor: pointer; margin-top: 6px; border-radius: 3px;
+  }
+  button.primary:hover { background: linear-gradient(to bottom, #ffffff 0%, #f3f3f3 45%, #e6e6e6 50%, #d4d4d4 95%, #c0c0c0 100%); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  input {
+    width: 100%; padding: 4px 6px; border: 1px solid #7f9db9;
+    background: #fff; color: #000; font-size: 12px; margin-bottom: 8px;
+  }
+  .tabs { display: flex; gap: 2px; margin-bottom: 10px; border-bottom: 1px solid #919b9c; }
+  .tabs button {
+    flex: 1; padding: 6px; border: 1px solid #919b9c; border-bottom: none;
+    background: linear-gradient(to bottom, #f4f4f0 0%, #d6d3c4 100%);
+    color: #000; cursor: pointer; font-size: 12px; border-radius: 3px 3px 0 0;
+  }
+  .tabs button.active { background: #ece9d8; font-weight: bold; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .status { font-size: 11px; margin-top: 8px; text-align: center; min-height: 16px; }
+  .addr {
+    font-family: "Courier New", monospace; font-size: 11px;
+    word-break: break-all; background: #fff; border: 1px solid #7f9db9; padding: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="splash">
+  <img src="logo.png" onerror="this.style.display='none'">
+  <div class="apptitle">AWEN Wallet</div>
+  <div class="appsub">Desktop Edition &middot; BNB Smart Chain &middot; v1.0</div>
+</div>
+
+<div class="card" id="connectCard">
+  <button class="primary" id="createBtn">Create New Wallet</button>
+  <button class="primary" id="importBtn">Import Existing Wallet</button>
+  <div class="status" id="connectStatus"></div>
+</div>
+
+<div class="card" id="createCard" style="display:none">
+  <div class="status" style="color:#a00;font-weight:bold;margin-bottom:12px">Save these now. If you lose them, your funds are gone forever. Never share them with anyone.</div>
+  <div class="row"><span class="label">Address</span></div>
+  <div class="addr" id="newAddr"></div>
+  <div class="row" style="margin-top:10px"><span class="label">Private Key</span></div>
+  <div class="addr" id="newKey"></div>
+  <div class="row" style="margin-top:10px"><span class="label">Recovery Phrase</span></div>
+  <div class="addr" id="newMnemonic"></div>
+  <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px">
+    <input type="checkbox" id="savedCheckbox" style="width:auto;margin:0">
+    I have saved my private key / recovery phrase somewhere safe
+  </label>
+  <button class="primary" id="continueBtn" disabled>Continue to Wallet</button>
+</div>
+
+<div class="card" id="importCard" style="display:none">
+  <input id="importInput" type="password" placeholder="Paste private key (0x...) or 12-word recovery phrase">
+  <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px">
+    <input type="checkbox" id="showImportInput" style="width:auto;margin:0">
+    Show
+  </label>
+  <button class="primary" id="importSubmitBtn">Import</button>
+  <div class="status" id="importStatus"></div>
+</div>
+
+<div class="card" id="walletCard" style="display:none">
+  <div class="row"><span class="label">Address</span></div>
+  <div class="addr" id="addrDisplay"></div>
+  <button class="primary" id="exportBtn">Export Wallet</button>
+  <div class="row" style="margin-top:14px"><span class="label">BNB Balance</span><span class="value" id="bnbBalance">-</span></div>
+
+  <div class="big-balance" id="tokenBalance">-</div>
+  <div class="status" id="tokenName" style="text-align:center;margin-bottom:16px">AWEN</div>
+
+  <div class="tabs">
+    <button class="active" data-tab="buy">Buy</button>
+    <button data-tab="sell">Sell</button>
+    <button data-tab="send">Send</button>
+    <button data-tab="stake">Stake</button>
+  </div>
+
+  <div class="panel active" id="panel-buy">
+    <div id="noBnbGuide" style="display:none;background:#fff;border:1px solid #7f9db9;padding:8px;margin-bottom:10px;font-size:11px;line-height:1.6">
+      <b>No BNB yet?</b><br>
+      1. Buy a small amount of BNB on Binance/any exchange<br>
+      2. Withdraw to network <b>BNB Smart Chain (BEP20)</b><br>
+      3. Send it to this address:<br>
+      <div style="display:flex;gap:4px;margin:4px 0">
+        <div class="addr" id="guideAddr" style="flex:1;margin:0"></div>
+        <button class="primary" id="copyAddrBtn" style="width:auto;margin:0;padding:4px 8px">Copy</button>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px"><span class="label">You pay</span></div>
+    <input id="buyBnbAmount" placeholder="BNB amount" type="number" step="any">
+    <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="buyEstimate">-</span></div>
+    <button class="primary" id="buyBtn">Buy AWEN</button>
+  </div>
+
+  <div class="panel" id="panel-sell">
+    <div class="row"><span class="label">You sell</span></div>
+    <input id="sellBitsAmount" placeholder="AWEN amount" type="number" step="any">
+    <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="sellEstimate">-</span></div>
+    <button class="primary" id="sellBtn">Sell AWEN</button>
+  </div>
+
+  <div class="panel" id="panel-send">
+    <input id="sendTo" placeholder="Recipient address (0x...)">
+    <input id="sendAmount" placeholder="Amount" type="number">
+    <button class="primary" id="sendBtn">Send</button>
+  </div>
+
+  <div class="panel" id="panel-stake">
+    <div class="row"><span class="label">Currently Staked</span><span class="value" id="stakedAmount">-</span></div>
+    <div class="row"><span class="label">Next Reward In</span><span class="value" id="nextReward">-</span></div>
+    <input id="stakeAmount" placeholder="Amount to stake" type="number">
+    <button class="primary" id="stakeBtn">Stake</button>
+    <input id="unstakeAmount" placeholder="Amount to unstake" type="number">
+    <button class="primary" id="unstakeBtn">Unstake</button>
+    <button class="primary" id="claimBtn" style="margin-top:14px">Claim Loyalty Reward (+2)</button>
+  </div>
+
+  <div class="status" id="txStatus"></div>
+</div>
+
+<div class="card" id="exportCard" style="display:none">
+  <div class="status" style="color:#a00;font-weight:bold;margin-bottom:12px">Anyone with this private key or phrase can take your funds. Never share it.</div>
+  <div class="row"><span class="label">Address</span></div>
+  <div class="addr" id="exportAddr"></div>
+  <div class="row" style="margin-top:10px"><span class="label">Private Key</span></div>
+  <div class="addr" id="exportKey"></div>
+  <div class="row" style="margin-top:10px"><span class="label">Recovery Phrase</span></div>
+  <div class="addr" id="exportMnemonic"></div>
+  <button class="primary" id="closeExportBtn" style="margin-top:14px">Close</button>
+</div>
+
+<script>
+const { ethers } = require('ethers');
+const { clipboard } = require('electron');
+
+const AWEN_ADDRESS = "0xE9C17EDe6C5E7AE3EE3b839F71Bf0156d99C6166";
+const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
+const BSC_RPC = "https://bsc-dataseed.binance.org/";
+
+const ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function stake(uint256 amount)",
+  "function unstake(uint256 amount)",
+  "function claimReward()",
+  "function stakedBalance(address) view returns (uint256)",
+  "function timeUntilNextReward(address) view returns (uint256)"
+];
+
+const ROUTER_ABI = [
+  "function WETH() view returns (address)",
+  "function getAmountsOut(uint amountIn, address[] path) view returns (uint[] memory)",
+  "function swapExactETHForTokens(uint amountOutMin, address[] path, address to, uint deadline) payable returns (uint[] memory)",
+  "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)"
+];
+
+let provider, signer, localWallet, pendingWallet, estTimer;
+
+function createNewWallet() {
+  pendingWallet = ethers.Wallet.createRandom();
+  document.getElementById('newAddr').textContent = pendingWallet.address;
+  document.getElementById('newKey').textContent = pendingWallet.privateKey;
+  document.getElementById('newMnemonic').textContent = pendingWallet.mnemonic.phrase;
+  document.getElementById('connectCard').style.display = 'none';
+  document.getElementById('createCard').style.display = 'block';
+}
+
+async function continueToWallet() {
+  provider = new ethers.JsonRpcProvider(BSC_RPC);
+  localWallet = pendingWallet;
+  signer = pendingWallet.connect(provider);
+  document.getElementById('createCard').style.display = 'none';
+  await enterWallet();
+}
+
+function showImportCard() {
+  document.getElementById('connectCard').style.display = 'none';
+  document.getElementById('importCard').style.display = 'block';
+}
+
+async function importWallet() {
+  const input = document.getElementById('importInput').value.trim();
+  const status = document.getElementById('importStatus');
+  try {
+    provider = new ethers.JsonRpcProvider(BSC_RPC);
+    let wallet;
+    if (input.startsWith('0x') && input.length === 66) {
+      wallet = new ethers.Wallet(input);
+    } else {
+      wallet = ethers.Wallet.fromPhrase(input);
+    }
+    localWallet = wallet;
+    signer = wallet.connect(provider);
+    document.getElementById('importCard').style.display = 'none';
+    await enterWallet();
+  } catch (e) {
+    status.textContent = "Invalid private key or recovery phrase.";
+  }
+}
+
+async function enterWallet() {
+  const addr = await signer.getAddress();
+  document.getElementById('walletCard').style.display = 'block';
+  document.getElementById('addrDisplay').textContent = addr;
+  await refresh();
+}
+
+function exportWallet() {
+  document.getElementById('exportAddr').textContent = localWallet.address;
+  document.getElementById('exportKey').textContent = localWallet.privateKey;
+  document.getElementById('exportMnemonic').textContent = localWallet.mnemonic ? localWallet.mnemonic.phrase : "(imported via private key — no recovery phrase available)";
+  document.getElementById('walletCard').style.display = 'none';
+  document.getElementById('exportCard').style.display = 'block';
+}
+
+function closeExport() {
+  document.getElementById('exportCard').style.display = 'none';
+  document.getElementById('walletCard').style.display = 'block';
+}
+
+async function refresh() {
+  const addr = await signer.getAddress();
+  const bnbBal = await provider.getBalance(addr);
+  document.getElementById('bnbBalance').textContent = parseFloat(ethers.formatEther(bnbBal)).toFixed(5) + " BNB";
+  document.getElementById('guideAddr').textContent = addr;
+  document.getElementById('noBnbGuide').style.display = bnbBal === 0n ? 'block' : 'none';
+
+  const contract = new ethers.Contract(AWEN_ADDRESS, ABI, provider);
+  const [bal, dec, staked, nextReward] = await Promise.all([
+    contract.balanceOf(addr), contract.decimals(),
+    contract.stakedBalance(addr), contract.timeUntilNextReward(addr)
+  ]);
+  document.getElementById('tokenBalance').textContent = parseFloat(ethers.formatUnits(bal, dec)).toLocaleString();
+  document.getElementById('stakedAmount').textContent = parseFloat(ethers.formatUnits(staked, dec)).toLocaleString();
+
+  const secs = Number(nextReward);
+  if (secs === Number(ethers.MaxUint256)) document.getElementById('nextReward').textContent = "Not staking";
+  else if (secs === 0) document.getElementById('nextReward').textContent = "Ready!";
+  else document.getElementById('nextReward').textContent = Math.floor(secs / 86400) + " days";
+}
+
+async function updateBuyEstimate() {
+  const amount = document.getElementById('buyBnbAmount').value;
+  const el = document.getElementById('buyEstimate');
+  if (!amount || Number(amount) <= 0) { el.textContent = "-"; return; }
+  try {
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
+    const weth = await router.WETH();
+    const amounts = await router.getAmountsOut(ethers.parseEther(amount), [weth, AWEN_ADDRESS]);
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, provider);
+    const dec = await contract.decimals();
+    el.textContent = parseFloat(ethers.formatUnits(amounts[1], dec)).toLocaleString() + " AWEN";
+  } catch (e) { el.textContent = "No liquidity / error"; }
+}
+
+async function buyTokens() {
+  const amount = document.getElementById('buyBnbAmount').value;
+  const status = document.getElementById('txStatus');
+  if (!amount || Number(amount) <= 0) { status.textContent = "Enter a valid BNB amount."; return; }
+  try {
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, signer);
+    const weth = await router.WETH();
+    const amountIn = ethers.parseEther(amount);
+    const addr = await signer.getAddress();
+    const bnbBal = await provider.getBalance(addr);
+    if (bnbBal < amountIn) {
+      status.textContent = `Not enough BNB. You have ${parseFloat(ethers.formatEther(bnbBal)).toFixed(5)}.`;
+      return;
+    }
+    const amounts = await router.getAmountsOut(amountIn, [weth, AWEN_ADDRESS]);
+    const minOut = (amounts[1] * 95n) / 100n;
+    const deadline = Math.floor(Date.now() / 1000) + 600;
+    status.textContent = "Confirming...";
+    const tx = await router.swapExactETHForTokens(minOut, [weth, AWEN_ADDRESS], addr, deadline, { value: amountIn });
+    status.textContent = "Buying...";
+    await tx.wait();
+    status.textContent = "Bought!";
+    document.getElementById('buyBnbAmount').value = '';
+    document.getElementById('buyEstimate').textContent = '-';
+    await refresh();
+  } catch (e) { status.textContent = "Error: " + (e.shortMessage || e.message); }
+}
+
+async function updateSellEstimate() {
+  const amount = document.getElementById('sellBitsAmount').value;
+  const el = document.getElementById('sellEstimate');
+  if (!amount || Number(amount) <= 0) { el.textContent = "-"; return; }
+  try {
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
+    const weth = await router.WETH();
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, provider);
+    const dec = await contract.decimals();
+    const amounts = await router.getAmountsOut(ethers.parseUnits(amount, dec), [AWEN_ADDRESS, weth]);
+    el.textContent = parseFloat(ethers.formatEther(amounts[1])).toFixed(6) + " BNB";
+  } catch (e) { el.textContent = "No liquidity / error"; }
+}
+
+async function sellTokens() {
+  const amount = document.getElementById('sellBitsAmount').value;
+  const status = document.getElementById('txStatus');
+  if (!amount || Number(amount) <= 0) { status.textContent = "Enter a valid AWEN amount."; return; }
+  try {
+    const token = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
+    const dec = await token.decimals();
+    const amountIn = ethers.parseUnits(amount, dec);
+    const addr = await signer.getAddress();
+    const bal = await token.balanceOf(addr);
+    if (bal < amountIn) {
+      status.textContent = `Not enough AWEN. You have ${parseFloat(ethers.formatUnits(bal, dec)).toLocaleString()}.`;
+      return;
+    }
+    const allowance = await token.allowance(addr, PANCAKE_ROUTER);
+    if (allowance < amountIn) {
+      status.textContent = "Approving...";
+      const approveTx = await token.approve(PANCAKE_ROUTER, amountIn);
+      await approveTx.wait();
+    }
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, signer);
+    const weth = await router.WETH();
+    const amounts = await router.getAmountsOut(amountIn, [AWEN_ADDRESS, weth]);
+    const minOut = (amounts[1] * 95n) / 100n;
+    const deadline = Math.floor(Date.now() / 1000) + 600;
+    status.textContent = "Confirming...";
+    const tx = await router.swapExactTokensForETH(amountIn, minOut, [AWEN_ADDRESS, weth], addr, deadline);
+    status.textContent = "Selling...";
+    await tx.wait();
+    status.textContent = "Sold!";
+    document.getElementById('sellBitsAmount').value = '';
+    document.getElementById('sellEstimate').textContent = '-';
+    await refresh();
+  } catch (e) { status.textContent = "Error: " + (e.shortMessage || e.message); }
+}
+
+async function sendTokens() {
+  const to = document.getElementById('sendTo').value.trim();
+  const amount = document.getElementById('sendAmount').value;
+  const status = document.getElementById('txStatus');
+  if (!ethers.isAddress(to)) { status.textContent = "Invalid recipient address."; return; }
+  if (!amount || Number(amount) <= 0) { status.textContent = "Enter a valid amount."; return; }
+  try {
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
+    const dec = await contract.decimals();
+    status.textContent = "Sending...";
+    const tx = await contract.transfer(to, ethers.parseUnits(amount, dec));
+    await tx.wait();
+    status.textContent = "Sent!";
+    await refresh();
+  } catch (e) { status.textContent = "Error: " + (e.shortMessage || e.message); }
+}
+
+async function stakeTokens() { await contractAction('stake', document.getElementById('stakeAmount').value); }
+async function unstakeTokens() { await contractAction('unstake', document.getElementById('unstakeAmount').value); }
+async function claimReward() { await contractAction('claimReward', null); }
+
+async function contractAction(method, amount) {
+  const status = document.getElementById('txStatus');
+  try {
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
+    let tx;
+    if (amount !== null) {
+      const dec = await contract.decimals();
+      tx = await contract[method](ethers.parseUnits(amount, dec));
+    } else {
+      tx = await contract[method]();
+    }
+    status.textContent = "Processing...";
+    await tx.wait();
+    status.textContent = "Done!";
+    await refresh();
+  } catch (e) { status.textContent = "Error: " + (e.shortMessage || e.message); }
+}
+
+document.getElementById('createBtn').onclick = createNewWallet;
+document.getElementById('importBtn').onclick = showImportCard;
+document.getElementById('importSubmitBtn').onclick = importWallet;
+document.getElementById('showImportInput').onchange = (e) => {
+  document.getElementById('importInput').type = e.target.checked ? 'text' : 'password';
+};
+document.getElementById('savedCheckbox').onchange = (e) => {
+  document.getElementById('continueBtn').disabled = !e.target.checked;
+};
+document.getElementById('continueBtn').onclick = continueToWallet;
+document.getElementById('exportBtn').onclick = exportWallet;
+document.getElementById('closeExportBtn').onclick = closeExport;
+document.getElementById('buyBtn').onclick = buyTokens;
+document.getElementById('copyAddrBtn').onclick = () => {
+  clipboard.writeText(document.getElementById('guideAddr').textContent);
+  const btn = document.getElementById('copyAddrBtn');
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1200);
+};
+document.getElementById('buyBnbAmount').oninput = () => {
+  clearTimeout(estTimer); estTimer = setTimeout(updateBuyEstimate, 400);
+};
+document.getElementById('sellBtn').onclick = sellTokens;
+document.getElementById('sellBitsAmount').oninput = () => {
+  clearTimeout(estTimer); estTimer = setTimeout(updateSellEstimate, 400);
+};
+document.getElementById('sendBtn').onclick = sendTokens;
+document.getElementById('stakeBtn').onclick = stakeTokens;
+document.getElementById('unstakeBtn').onclick = unstakeTokens;
+document.getElementById('claimBtn').onclick = claimReward;
+
+document.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  };
+});
+</script>
+</body>
+</html>
