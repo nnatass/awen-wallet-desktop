@@ -119,15 +119,17 @@
 
   <div class="panel active" id="panel-buy">
     <div id="noBnbGuide" style="display:none;background:#fff;border:1px solid #7f9db9;padding:8px;margin-bottom:10px;font-size:11px;line-height:1.6">
-      <b>No BNB yet?</b><br>
-      1. Buy a small amount of BNB on Binance/any exchange<br>
-      2. Withdraw to network <b>BNB Smart Chain (BEP20)</b><br>
-      3. Send it to this address:<br>
+      <b>No BNB yet? Here's exactly how to get some:</b><br>
+      1. Click "Buy BNB on Binance" below &mdash; buy a small amount with a card<br>
+      2. On Binance, go to <b>Withdraw</b> &rarr; asset <b>BNB</b> &rarr; network <b>BNB Smart Chain (BEP20)</b><br>
+      3. Paste this address as the destination:<br>
       <div style="display:flex;gap:4px;margin:4px 0">
         <div class="addr" id="guideAddr" style="flex:1;margin:0"></div>
         <button class="primary" id="copyAddrBtn" style="width:auto;margin:0;padding:4px 8px">Copy</button>
       </div>
+      4. Wait a minute for it to arrive, then come back here and buy AWEN
     </div>
+    <button class="primary" id="buyBnbBtn" type="button">Buy BNB on Binance</button>
     <div class="row" style="margin-top:10px"><span class="label">You pay</span></div>
     <input id="buyBnbAmount" placeholder="BNB amount" type="number" step="any">
     <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="buyEstimate">-</span></div>
@@ -173,7 +175,7 @@
 
 <script>
 const { ethers } = require('ethers');
-const { clipboard } = require('electron');
+const { clipboard, shell } = require('electron');
 
 const AWEN_ADDRESS = "0xE9C17EDe6C5E7AE3EE3b839F71Bf0156d99C6166";
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
@@ -428,6 +430,9 @@ document.getElementById('continueBtn').onclick = continueToWallet;
 document.getElementById('exportBtn').onclick = exportWallet;
 document.getElementById('closeExportBtn').onclick = closeExport;
 document.getElementById('buyBtn').onclick = buyTokens;
+document.getElementById('buyBnbBtn').onclick = () => {
+  shell.openExternal('https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00C2YSCJLT');
+};
 document.getElementById('copyAddrBtn').onclick = () => {
   clipboard.writeText(document.getElementById('guideAddr').textContent);
   const btn = document.getElementById('copyAddrBtn');
