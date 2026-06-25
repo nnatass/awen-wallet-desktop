@@ -68,6 +68,10 @@
   <img src="logo.png" onerror="this.style.display='none'">
   <div class="apptitle">AWEN Wallet</div>
   <div class="appsub">Desktop Edition &middot; BNB Smart Chain &middot; v1.0</div>
+  <div style="margin-top:10px;border-top:1px solid #d8d4c0;padding-top:8px">
+    <a href="#" id="linkAndroid" style="display:block;font-size:11px;margin-top:4px;color:#003c9c">Get AWEN Wallet for Android (APK) &rarr;</a>
+    <a href="#" id="linkWhitepaper" style="display:block;font-size:11px;margin-top:4px;color:#003c9c">Read the AWEN Whitepaper (PDF) &rarr;</a>
+  </div>
 </div>
 
 <div class="card" id="connectCard">
@@ -483,6 +487,14 @@ document.getElementById('closeExportBtn').onclick = closeExport;
 document.getElementById('buyBtn').onclick = buyTokens;
 document.getElementById('buyBnbBtn').onclick = () => {
   shell.openExternal('https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00C2YSCJLT');
+};
+document.getElementById('linkAndroid').onclick = (e) => {
+  e.preventDefault();
+  shell.openExternal('https://github.com/nnatass/awen-wallet-desktop/releases/download/v1.0.0/AWEN-Wallet-Android.apk');
+};
+document.getElementById('linkWhitepaper').onclick = (e) => {
+  e.preventDefault();
+  shell.openExternal('https://github.com/nnatass/awen-wallet-desktop/releases/download/v1.0.0/AWEN_Whitepaper.pdf');
 };
 document.getElementById('copyAddrBtn').onclick = () => {
   clipboard.writeText(document.getElementById('guideAddr').textContent);
