@@ -93,6 +93,7 @@
     I have saved my private key / recovery phrase somewhere safe
   </label>
   <button class="primary" id="continueBtn" disabled>Continue to Wallet</button>
+  <button class="primary" id="backFromCreateBtn" style="background:transparent;border:1px solid #919b9c">Back</button>
 </div>
 
 <div class="card" id="importCard" style="display:none">
@@ -102,6 +103,7 @@
     Show
   </label>
   <button class="primary" id="importSubmitBtn">Import</button>
+  <button class="primary" id="backFromImportBtn" style="background:transparent;border:1px solid #919b9c">Back</button>
   <div class="status" id="importStatus"></div>
 </div>
 
@@ -475,6 +477,14 @@ async function contractAction(method, amount) {
 document.getElementById('createBtn').onclick = createNewWallet;
 document.getElementById('importBtn').onclick = showImportCard;
 document.getElementById('importSubmitBtn').onclick = importWallet;
+document.getElementById('backFromCreateBtn').onclick = () => {
+  document.getElementById('createCard').style.display = 'none';
+  document.getElementById('connectCard').style.display = 'block';
+};
+document.getElementById('backFromImportBtn').onclick = () => {
+  document.getElementById('importCard').style.display = 'none';
+  document.getElementById('connectCard').style.display = 'block';
+};
 document.getElementById('showImportInput').onchange = (e) => {
   document.getElementById('importInput').type = e.target.checked ? 'text' : 'password';
 };
